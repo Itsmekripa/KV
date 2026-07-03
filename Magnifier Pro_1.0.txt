@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MAGNIFIER PRO 1.0</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; background: #eef4f8; color: #1e293b; overflow: hidden; }
+
+.header { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; padding: 12px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 3px 8px rgba(0,112,173,0.35); }
+.logo { font-size: 22px; }
+.title { flex: 1; }
+.title h1 { font-size: 17px; letter-spacing: 1px; }
+.title p { font-size: 10px; opacity: 0.85; }
+.mode-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 20px; padding: 3px; }
+.mode-btn { padding: 5px 14px; border: none; background: none; color: white; font-size: 10px; font-weight: 700; border-radius: 16px; cursor: pointer; }
+.mode-btn.active { background: white; color: #0070AD; }
+.version { background: #FFB40C; color: #4a3200; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+
+.tabs { background: #0F3250; padding: 0 15px; display: flex; height: 38px; align-items: stretch; }
+.tab { padding: 0 13px; border: none; background: none; cursor: pointer; font-size: 11px; font-weight: 600; color: #8fb8d4; border-bottom: 3px solid transparent; }
+.tab:hover { color: white; background: #17466e; }
+.tab.active { color: #12ABDB; border-bottom-color: #12ABDB; background: #17466e; }
+.admin-only { display: none; }
+body.admin .admin-only { display: block; }
+
+.main { display: flex; width: 100%; height: calc(100vh - 88px); gap: 8px; padding: 8px; }
+.tab-content { display: flex; flex: 1; gap: 8px; }
+.panel { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(15,50,80,0.12); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d3e3ef; }
+.panel-header { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; padding: 8px 12px; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 10px; }
+.panel-body { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; }
+
+.input-group { margin-bottom: 8px; }
+.input-label { font-size: 10px; font-weight: 700; color: #0070AD; margin-bottom: 2px; }
+textarea { width: 100%; padding: 5px; border: 2px solid #b3d7ea; border-radius: 4px; font-size: 9px; font-family: monospace; resize: vertical; min-height: 38px; background: #f5fafd; }
+textarea:focus { outline: none; border-color: #0070AD; background: white; }
+
+.btn-row { display: flex; gap: 6px; margin-top: 8px; }
+.btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; }
+.btn-primary { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; flex: 1; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary { background: #dce8f0; color: #0F3250; flex: 1; }
+.btn-secondary:hover { background: #c5d9e6; }
+
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+.stat-card { background: linear-gradient(135deg, #e6f3fa, #d4ecf7); padding: 10px; border-radius: 6px; border-left: 4px solid #0070AD; }
+.stat-label { font-size: 9px; color: #0070AD; font-weight: 700; text-transform: uppercase; }
+.stat-value { font-size: 22px; font-weight: 800; color: #005a8c; }
+
+table { width: 100%; border-collapse: collapse; font-size: 10px; }
+th { background: #0070AD; color: white; padding: 6px 5px; text-align: left; font-weight: 700; position: sticky; top: 0; }
+td { padding: 5px; border-bottom: 1px solid #e0ecf4; }
+tr:nth-child(even) { background: #f5fafd; }
+tr:hover { background: #e6f3fa; }
+
+.badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px; font-weight: 700; }
+.badge-high { background: #dc2626; color: white; }
+.badge-med { background: #FFB40C; color: #4a3200; }
+.badge-low { background: #2EA44F; color: white; }
+.badge-grey { background: #94a3b8; color: white; }
+
+.ws-input { width: 100%; padding: 5px; border: 2px solid #b3d7ea; border-radius: 4px; font-size: 10px; }
+.ws-input:focus { outline: none; border-color: #0070AD; }
+select { padding: 4px 8px; border: none; border-radius: 4px; font-size: 11px; font-weight: 700; color: #0070AD; }
+
+.export-card { background: #f5fafd; border: 2px solid #b3d7ea; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.export-card h4 { color: #005a8c; font-size: 12px; margin-bottom: 4px; }
+.export-card p { font-size: 10px; color: #5a7a90; margin-bottom: 8px; }
+.export-btn { padding: 8px 16px; background: #2EA44F; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 11px; }
+.export-btn:hover { background: #268a42; }
+
+.chat-panel { flex: 0 0 240px; display: flex; flex-direction: column; }
+.chat-header { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+.chat-avatar { width: 30px; height: 30px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.chat-header-info h4 { font-size: 12px; }
+.chat-header-info span { font-size: 9px; opacity: 0.85; display: flex; align-items: center; gap: 4px; }
+.online-dot { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; display: inline-block; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 10px; background: #eef4f8; display: flex; flex-direction: column; gap: 8px; }
+.msg-row { display: flex; gap: 6px; align-items: flex-end; }
+.msg-row.user { flex-direction: row-reverse; }
+.msg-avatar { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.msg-avatar.bot { background: #0070AD; }
+.msg-avatar.usr { background: #FFB40C; }
+.msg { padding: 8px 10px; border-radius: 12px; font-size: 10px; line-height: 1.4; max-width: 78%; }
+.msg-bot { background: white; color: #1e293b; border-bottom-left-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.msg-user { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; border-bottom-right-radius: 3px; }
+.chat-input { display: flex; gap: 6px; padding: 10px; background: white; border-top: 2px solid #e0ecf4; }
+.chat-input input { flex: 1; padding: 8px 12px; border: 2px solid #b3d7ea; border-radius: 18px; font-size: 10px; }
+.chat-input input:focus { outline: none; border-color: #0070AD; }
+.chat-input button { width: 34px; height: 34px; background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 13px; }
+
+.hidden { display: none !important; }
+.matrix-scroll { width: 100%; height: 100%; overflow: auto; }
+.xpath { font-family: monospace; font-size: 9px; color: #0070AD; background: #e6f3fa; padding: 2px 4px; border-radius: 3px; }
+.section-title { font-size: 12px; font-weight: 800; color: #005a8c; margin: 10px 0 6px; }
+.gloss-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.gloss-row input, .gloss-row select { flex: 1; padding: 6px; border: 2px solid #b3d7ea; border-radius: 4px; font-size: 10px; }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: #dce8f0; }
+::-webkit-scrollbar-thumb { background: #0070AD; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🔍</div>
+  <div class="title"><h1>MAGNIFIER PRO</h1><p>Multi-Language Automation Intelligence Platform</p></div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="modeTranslator" onclick="setMode('translator')">👤 Translator</button>
+    <button class="mode-btn" id="modeAdmin" onclick="setMode('admin')">⚙️ Admin</button>
+  </div>
+  <div class="version">PRO 1.0 ENTERPRISE</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(event,'bulk')">🚀 Bulk Loader</button>
+  <button class="tab" onclick="switchTab(event,'workspace')">⚖️ Workspace</button>
+  <button class="tab" onclick="switchTab(event,'matrix')">🌍 Matrix</button>
+  <button class="tab" onclick="switchTab(event,'glossary')">📖 Glossary</button>
+  <button class="tab" onclick="switchTab(event,'missing')">📊 Missing</button>
+  <button class="tab admin-only" onclick="switchTab(event,'scan')">📋 Scan</button>
+  <button class="tab admin-only" onclick="switchTab(event,'validator')">✅ Validator</button>
+  <button class="tab admin-only" onclick="switchTab(event,'dex')">🛠️ DEX</button>
+  <button class="tab admin-only" onclick="switchTab(event,'browser')">🌐 Browser</button>
+  <button class="tab" onclick="switchTab(event,'export')">📥 Export</button>
+</div>
+
+<div class="main">
+
+  <div id="bulk" class="tab-content">
+    <div class="panel" style="flex: 0 0 26%;">
+      <div class="panel-header">📝 Input HTML</div>
+      <div class="panel-body">
+        <div class="input-group"><div class="input-label">🇬🇧 ENGLISH (source)</div><textarea id="en"></textarea></div>
+        <div class="input-group"><div class="input-label">🇩🇪 DEUTSCH</div><textarea id="de"></textarea></div>
+        <div class="input-group"><div class="input-label">🇫🇷 FRANÇAIS</div><textarea id="fr"></textarea></div>
+        <div class="input-group"><div class="input-label">🇨🇳 中文</div><textarea id="zh"></textarea></div>
+        <div class="input-group"><div class="input-label">🇯🇵 日本語</div><textarea id="ja"></textarea></div>
+        <div class="input-group"><div class="input-label">🇪🇸 ESPAÑOL</div><textarea id="es"></textarea></div>
+        <div class="input-group"><div class="input-label">🇵🇹 PORTUGUÊS</div><textarea id="pt"></textarea></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="analyze()">▶ ANALYZE</button>
+          <button class="btn btn-secondary" onclick="clearAll()">CLEAR</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="flex: 1;">
+      <div class="panel-header">📊 Analysis Summary</div>
+      <div class="panel-body">
+        <div class="stats">
+          <div class="stat-card"><div class="stat-label">Labels</div><div class="stat-value" id="total">0</div></div>
+          <div class="stat-card"><div class="stat-label">Languages</div><div class="stat-value" id="langs">0</div></div>
+          <div class="stat-card"><div class="stat-label">High Risk</div><div class="stat-value" id="high" style="color:#dc2626;">0</div></div>
+          <div class="stat-card"><div class="stat-label">Expansion Warnings</div><div class="stat-value" id="expwarn" style="color:#c98a00;">0</div></div>
+        </div>
+        <div class="section-title">Translation Completeness</div>
+        <table id="transtable"><tr><td>Run ANALYZE first</td></tr></table>
+      </div>
+    </div>
+  </div>
+
+  <div id="workspace" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">⚖️ Side-by-Side Workspace — Source vs
+        <select id="wsLang" onchange="renderWorkspace()">
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="zh">🇨🇳 中文</option>
+          <option value="ja">🇯🇵 日本語</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="pt">🇵🇹 Português</option>
+        </select>
+      </div>
+      <div class="matrix-scroll"><table>
+        <thead><tr><th style="width:35px;">#</th><th style="width:38%;">🇬🇧 Source (EN)</th><th style="width:38%;">Target (editable)</th><th>Expansion</th></tr></thead>
+        <tbody id="wsBody"><tr><td colspan="4" style="text-align:center;padding:40px;">Run ANALYZE first</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div id="matrix" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">🌍 Translation Matrix — All Languages</div>
+      <div class="matrix-scroll"><table>
+        <thead><tr><th>#</th><th>EN</th><th>DE</th><th>FR</th><th>ZH</th><th>JA</th><th>ES</th><th>PT</th></tr></thead>
+        <tbody id="matrixBody"><tr><td colspan="8" style="text-align:center;padding:40px;">Run ANALYZE first</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div id="glossary" class="tab-content hidden">
+    <div class="panel" style="flex: 0 0 30%;">
+      <div class="panel-header">📖 Add Glossary Term</div>
+      <div class="panel-body">
+        <div class="input-label">EN TERM</div>
+        <div class="gloss-row"><input id="gEn" placeholder="e.g. Sign In"></div>
+        <div class="input-label">LANGUAGE</div>
+        <div class="gloss-row"><select id="gLang"><option value="de">DE</option><option value="fr">FR</option><option value="zh">ZH</option><option value="ja">JA</option><option value="es">ES</option><option value="pt">PT</option></select></div>
+        <div class="input-label">REQUIRED TRANSLATION</div>
+        <div class="gloss-row"><input id="gTerm" placeholder="e.g. Anmelden"></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="addGloss()">➕ ADD TERM</button>
+        <p style="margin-top:10px;color:#5a7a90;font-size:10px;">Validator enforces these corporate terms across all labels.</p>
+      </div>
+    </div>
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">📖 Corporate Glossary</div>
+      <div class="matrix-scroll"><table>
+        <thead><tr><th>EN Term</th><th>Lang</th><th>Required Translation</th><th></th></tr></thead>
+        <tbody id="glossBody"><tr><td colspan="4" style="text-align:center;padding:30px;">No terms yet</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div id="missing" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">📊 Missing Translations</div>
+      <div class="panel-body" id="missingBody">Run ANALYZE first</div>
+    </div>
+  </div>
+
+  <div id="scan" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">📋 Scan — Labels + XPath</div>
+      <div class="matrix-scroll"><table>
+        <thead><tr><th>#</th><th>Label</th><th>Risk</th><th>Suggested XPath</th></tr></thead>
+        <tbody id="scanBody"><tr><td colspan="4" style="text-align:center;padding:40px;">Run ANALYZE first</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <div id="validator" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">✅ Validator — Quality + Glossary + Expansion</div>
+      <div class="panel-body" id="validatorBody">Run ANALYZE first</div>
+    </div>
+  </div>
+
+  <div id="dex" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">🛠️ DEX Risk Report</div>
+      <div class="panel-body" id="dexBody">Run ANALYZE first</div>
+    </div>
+  </div>
+
+  <div id="browser" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">🌐 Browser Compatibility</div>
+      <div class="panel-body" id="browserBody">Run ANALYZE first</div>
+    </div>
+  </div>
+
+  <div id="export" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">📥 Export (UTF-8)</div>
+      <div class="panel-body">
+        <div class="export-card"><h4>📊 Full CSV (Excel-safe)</h4><p>Labels, risk, all translations, expansion %.</p><button class="export-btn" onclick="exportCSV()">Download CSV</button></div>
+        <div class="export-card"><h4>📄 JSON</h4><p>Full data incl. glossary — for pipelines/backups.</p><button class="export-btn" onclick="exportJSON()">Download JSON</button></div>
+        <div class="export-card"><h4>📋 Text Report</h4><p>Readable summary with validation issues.</p><button class="export-btn" onclick="exportReport()">Download Report</button></div>
+        <div class="export-card"><h4>📊 Missing CSV</h4><p>Every missing label per language.</p><button class="export-btn" onclick="exportMissing()">Download Missing CSV</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-panel panel">
+    <div class="chat-header">
+      <div class="chat-avatar">🤖</div>
+      <div class="chat-header-info"><h4>MAGNIFIER Bot</h4><span><span class="online-dot"></span> Online</span></div>
+    </div>
+    <div class="chat-messages" id="chat"></div>
+    <div class="chat-input">
+      <input id="chatinput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let data = { labels: [], en: [], de: [], fr: [], zh: [], ja: [], es: [], pt: [] };
+let trans = {};
+let glossary = [];
+const LANGS = [['de','DE'],['fr','FR'],['zh','ZH'],['ja','JA'],['es','ES'],['pt','PT']];
+const CJK = ['zh','ja'];
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function setMode(m) {
+  document.body.classList.toggle('admin', m === 'admin');
+  document.getElementById('modeTranslator').classList.toggle('active', m === 'translator');
+  document.getElementById('modeAdmin').classList.toggle('active', m === 'admin');
+  if (m === 'translator') {
+    let active = document.querySelector('.tab.active');
+    if (active && active.classList.contains('admin-only')) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      document.getElementById('bulk').classList.remove('hidden');
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelector('.tab').classList.add('active');
+    }
+  }
+  botMsg(m === 'admin' ? '⚙️ Admin mode: Scan, Validator, DEX, Browser unlocked.' : '👤 Translator mode: focused everyday view.');
+}
+
+function switchTab(e, tab) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+  document.getElementById(tab).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+}
+
+function analyze() {
+  let en = document.getElementById('en').value.trim();
+  if (!en) { botMsg('⚠️ Paste English HTML first!'); return; }
+  data = { labels: [], en: [], de: [], fr: [], zh: [], ja: [], es: [], pt: [] };
+  trans = {};
+
+  function parse(html) {
+    let doc = new DOMParser().parseFromString(html, 'text/html');
+    ['script','style'].forEach(t => doc.querySelectorAll(t).forEach(el => el.remove()));
+    let labels = [];
+    doc.querySelectorAll('h1,h2,h3,button,a,label,span,p').forEach(el => {
+      let text = (el.textContent||'').trim().replace(/\s+/g,' ');
+      if (text && text.length > 1 && text.length < 100) {
+        labels.push({ text: text.substring(0,40), tag: el.tagName.toLowerCase(), risk: (el.id||'').match(/\d{6,}/) ? 'HIGH' : 'LOW' });
+      }
+    });
+    return labels;
+  }
+
+  data.en = parse(en);
+  ['de','fr','zh','ja','es','pt'].forEach(l => {
+    let v = document.getElementById(l).value.trim();
+    if (v) data[l] = parse(v);
+  });
+
+  let map = {};
+  data.en.forEach(el => { if (!map[el.text]) map[el.text] = { ...el }; });
+  data.labels = Object.values(map);
+
+  ['de','fr','zh','ja','es','pt'].forEach(lang => {
+    if (data[lang].length) {
+      let lm = {};
+      data[lang].forEach(el => { if (!lm[el.text]) lm[el.text] = el; });
+      let ll = Object.values(lm);
+      data.labels.forEach((lab, i) => {
+        if (!trans[i]) trans[i] = { de:'', fr:'', zh:'', ja:'', es:'', pt:'' };
+        if (ll[i]) trans[i][lang] = ll[i].text;
+      });
+    }
+  });
+
+  renderAll();
+  botMsg('✅ ' + data.labels.length + ' labels analyzed. Open Workspace for side-by-side review.');
+}
+
+function expansion(src, tgt, lang) {
+  if (!tgt) return null;
+  let r = tgt.length / Math.max(src.length, 1);
+  let pct = Math.round((r - 1) * 100);
+  if (CJK.includes(lang)) return { pct, level: 'low' };
+  if (r > 1.5) return { pct, level: 'high' };
+  if (r > 1.3) return { pct, level: 'med' };
+  return { pct, level: 'low' };
+}
+
+function countExpansionWarnings() {
+  let n = 0;
+  data.labels.forEach((l,i) => {
+    LANGS.forEach(([k]) => {
+      let e = expansion(l.text, (trans[i]||{})[k], k);
+      if (e && e.level !== 'low') n++;
+    });
+  });
+  return n;
+}
+
+function filledCount(lang) {
+  let f = 0;
+  data.labels.forEach((l,i) => { if (trans[i] && trans[i][lang]) f++; });
+  return f;
+}
+
+function renderAll() {
+  let total = data.labels.length;
+  document.getElementById('total').textContent = total;
+  document.getElementById('high').textContent = data.labels.filter(l=>l.risk==='HIGH').length;
+  document.getElementById('langs').textContent = ['en','de','fr','zh','ja','es','pt'].filter(l=>data[l].length).length;
+  document.getElementById('expwarn').textContent = countExpansionWarnings();
+
+  let tt = '<tr><th>Language</th><th>Complete</th><th>Missing</th></tr>';
+  LANGS.forEach(([k,n]) => {
+    if (data[k].length) {
+      let f = filledCount(k);
+      let pct = total ? Math.round(f/total*100) : 0;
+      let c = pct>=80?'low':pct>=50?'med':'high';
+      tt += `<tr><td>${n}</td><td><span class="badge badge-${c}">${pct}%</span></td><td>${total-f}</td></tr>`;
+    }
+  });
+  document.getElementById('transtable').innerHTML = tt;
+
+  renderWorkspace(); renderMatrix(); renderScan(); renderValidator(); renderDex(); renderBrowser(); renderMissing(); renderGloss();
+}
+
+function renderWorkspace() {
+  let lang = document.getElementById('wsLang').value;
+  document.getElementById('wsBody').innerHTML = data.labels.map((l,i) => {
+    let t = (trans[i]||{})[lang] || '';
+    let e = expansion(l.text, t, lang);
+    let badge = !t ? '<span class="badge badge-grey">EMPTY</span>'
+      : `<span class="badge badge-${e.level}">${e.pct>0?'+':''}${e.pct}%</span>`;
+    return `<tr><td>${i+1}</td><td><strong>${esc(l.text)}</strong></td>
+      <td><input class="ws-input" data-idx="${i}" data-lang="${lang}" value="${esc(t)}"></td>
+      <td>${badge}</td></tr>`;
+  }).join('') || '<tr><td colspan="4" style="text-align:center;padding:40px;">No labels</td></tr>';
+
+  document.querySelectorAll('#wsBody .ws-input').forEach(inp => {
+    inp.addEventListener('change', function() {
+      let i = +this.dataset.idx, lg = this.dataset.lang;
+      if (!trans[i]) trans[i] = { de:'', fr:'', zh:'', ja:'', es:'', pt:'' };
+      trans[i][lg] = this.value;
+      renderMatrix(); renderValidator(); renderMissing();
+      document.getElementById('expwarn').textContent = countExpansionWarnings();
+      let e = expansion(data.labels[i].text, this.value, lg);
+      if (e && e.level === 'high') botMsg('⚠️ "' + data.labels[i].text + '" ' + lg.toUpperCase() + ' is +' + e.pct + '% — may break UI (50%+ expansion)');
+    });
+  });
+}
+
+function renderMatrix() {
+  document.getElementById('matrixBody').innerHTML = data.labels.map((l,i) => {
+    let t = trans[i]||{};
+    return `<tr><td>${i+1}</td><td><strong>${esc(l.text)}</strong></td><td>${esc(t.de)||'-'}</td><td>${esc(t.fr)||'-'}</td><td>${esc(t.zh)||'-'}</td><td>${esc(t.ja)||'-'}</td><td>${esc(t.es)||'-'}</td><td>${esc(t.pt)||'-'}</td></tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:40px;">No data</td></tr>';
+}
+
+function renderScan() {
+  document.getElementById('scanBody').innerHTML = data.labels.map((l,i) =>
+    `<tr><td>${i+1}</td><td>${esc(l.text)}</td><td><span class="badge badge-${l.risk==='HIGH'?'high':'low'}">${l.risk}</span></td><td><span class="xpath">//${l.tag}[text()='${esc(l.text)}']</span></td></tr>`
+  ).join('') || '<tr><td colspan="4">No data</td></tr>';
+}
+
+function renderValidator() {
+  let total = data.labels.length;
+  let issues = [];
+  data.labels.forEach((l,i) => {
+    let t = trans[i]||{};
+    LANGS.forEach(([k,n]) => {
+      if (data[k].length && !t[k]) issues.push({ label:l.text, issue:'Missing '+n, sev:'high' });
+      if (t[k] && t[k] === l.text && !CJK.includes(k)) issues.push({ label:l.text, issue:n+' identical to EN (untranslated?)', sev:'med' });
+      let e = expansion(l.text, t[k], k);
+      if (e && e.level === 'high') issues.push({ label:l.text, issue:n+' expansion +'+e.pct+'% (breaks 50% budget)', sev:'high' });
+      else if (e && e.level === 'med') issues.push({ label:l.text, issue:n+' expansion +'+e.pct+'% (over 30% budget)', sev:'med' });
+    });
+    glossary.forEach(g => {
+      if (l.text.toLowerCase().includes(g.en.toLowerCase()) && t[g.lang] && !t[g.lang].toLowerCase().includes(g.term.toLowerCase())) {
+        issues.push({ label:l.text, issue:'Glossary: '+g.lang.toUpperCase()+' must use "'+g.term+'" for "'+g.en+'"', sev:'high' });
+      }
+    });
+  });
+  let html = `<div class="stats"><div class="stat-card"><div class="stat-label">Checks</div><div class="stat-value">${total*8}</div></div><div class="stat-card"><div class="stat-label">Issues</div><div class="stat-value" style="color:${issues.length?'#dc2626':'#2EA44F'};">${issues.length}</div></div></div>`;
+  if (issues.length) {
+    html += '<table><tr><th>Label</th><th>Issue</th></tr>' + issues.slice(0,150).map(x => `<tr><td>${esc(x.label)}</td><td><span class="badge badge-${x.sev}">${esc(x.issue)}</span></td></tr>`).join('') + '</table>';
+    if (issues.length > 150) html += `<p style="margin-top:6px;">+${issues.length-150} more (see Report export)</p>`;
+  } else html += '<p>✅ All checks passed.</p>';
+  document.getElementById('validatorBody').innerHTML = html;
+  window._issues = issues;
+}
+
+function renderDex() {
+  let highs = data.labels.filter(l => l.risk==='HIGH');
+  let html = `<div class="stats"><div class="stat-card"><div class="stat-label">High Risk</div><div class="stat-value" style="color:#dc2626;">${highs.length}</div></div><div class="stat-card"><div class="stat-label">Safe</div><div class="stat-value" style="color:#2EA44F;">${data.labels.length-highs.length}</div></div></div>`;
+  html += '<table><tr><th>Rule</th><th>Detail</th></tr>';
+  html += '<tr><td><span class="badge badge-low">USE</span></td><td>Text XPath: <span class="xpath">//button[text()=\'Sign In\']</span></td></tr>';
+  html += '<tr><td><span class="badge badge-high">AVOID</span></td><td>Dynamic IDs (6+ digits)</td></tr>';
+  html += '<tr><td><span class="badge badge-high">FIREFOX</span></td><td>outerText not innerText for DEX bulk (TCL0003)</td></tr>';
+  html += '<tr><td><span class="badge badge-med">SYNC</span></td><td>WaitForElement() before clicks (TCL0002/8)</td></tr></table>';
+  if (highs.length) {
+    html += '<div class="section-title">⚠️ Fix these first</div><table><tr><th>Label</th><th>Fix</th></tr>' + highs.map(l => `<tr><td>${esc(l.text)}</td><td><span class="xpath">//${l.tag}[text()='${esc(l.text)}']</span></td></tr>`).join('') + '</table>';
+  }
+  document.getElementById('dexBody').innerHTML = html;
+}
+
+function renderBrowser() {
+  let html = '<table><tr><th>Browser</th><th>Status</th><th>Notes</th></tr>';
+  html += '<tr><td>Chrome</td><td><span class="badge badge-low">OK</span></td><td>innerText works</td></tr>';
+  html += '<tr><td>Edge</td><td><span class="badge badge-low">OK</span></td><td>Same engine as Chrome</td></tr>';
+  html += '<tr><td>Firefox</td><td><span class="badge badge-med">CHECK</span></td><td>Use outerText in DEX bulk runs (TCL0003)</td></tr></table>';
+  html += '<div class="section-title">UTF-8</div><p>All labels processed as Unicode — CJK (中文/日本語) handled natively; exports carry UTF-8 BOM so Excel renders them correctly.</p>';
+  document.getElementById('browserBody').innerHTML = html;
+}
+
+function renderMissing() {
+  let total = data.labels.length;
+  let html = '';
+  LANGS.forEach(([k,n]) => {
+    if (!data[k].length) return;
+    let miss = [];
+    data.labels.forEach((l,i) => { if (!trans[i] || !trans[i][k]) miss.push(l.text); });
+    let pct = total ? Math.round((total-miss.length)/total*100) : 0;
+    let c = pct>=80?'low':pct>=50?'med':'high';
+    html += `<div class="section-title">${n} — <span class="badge badge-${c}">${pct}%</span> (${miss.length} missing)</div>`;
+    if (miss.length) html += '<table>' + miss.slice(0,50).map(t => `<tr><td>${esc(t)}</td></tr>`).join('') + '</table>' + (miss.length>50?`<p>+${miss.length-50} more in Missing CSV</p>`:'');
+  });
+  document.getElementById('missingBody').innerHTML = html || 'No non-English languages loaded.';
+}
+
+function addGloss() {
+  let en = document.getElementById('gEn').value.trim();
+  let lang = document.getElementById('gLang').value;
+  let term = document.getElementById('gTerm').value.trim();
+  if (!en || !term) { botMsg('⚠️ Fill EN term and translation'); return; }
+  glossary.push({ en, lang, term });
+  document.getElementById('gEn').value = ''; document.getElementById('gTerm').value = '';
+  renderGloss(); renderValidator();
+  botMsg('📖 Glossary: "' + en + '" → ' + lang.toUpperCase() + ' "' + term + '"');
+}
+function delGloss(i) { glossary.splice(i,1); renderGloss(); renderValidator(); }
+function renderGloss() {
+  document.getElementById('glossBody').innerHTML = glossary.map((g,i) =>
+    `<tr><td>${esc(g.en)}</td><td>${g.lang.toUpperCase()}</td><td>${esc(g.term)}</td><td><button class="btn btn-secondary" style="padding:3px 8px;" onclick="delGloss(${i})">✕</button></td></tr>`
+  ).join('') || '<tr><td colspan="4" style="text-align:center;padding:30px;">No terms yet</td></tr>';
+}
+
+function clearAll() {
+  ['en','de','fr','zh','ja','es','pt'].forEach(l => document.getElementById(l).value = '');
+  data = { labels: [], en: [], de: [], fr: [], zh: [], ja: [], es: [], pt: [] };
+  trans = {};
+  renderAll();
+  botMsg('🗑 Cleared');
+}
+
+function botMsg(m) { addMsg(m,'bot'); }
+function addMsg(m, who) {
+  let row = document.createElement('div');
+  row.className = 'msg-row ' + (who==='user'?'user':'');
+  row.innerHTML = `<div class="msg-avatar ${who==='user'?'usr':'bot'}">${who==='user'?'👤':'🤖'}</div><div class="msg msg-${who==='user'?'user':'bot'}">${esc(m)}</div>`;
+  document.getElementById('chat').appendChild(row);
+  document.getElementById('chat').scrollTop = 999999;
+}
+function sendChat() {
+  let inp = document.getElementById('chatinput');
+  let msg = inp.value.trim(); if (!msg) return;
+  addMsg(msg,'user'); inp.value = '';
+  let m = msg.toLowerCase();
+  let r = 'Paste HTML → ANALYZE → Workspace for side-by-side editing → Export.';
+  if (m.includes('expan')) r = 'Expansion badge: green OK, amber +30%, red +50% (breaks UI boxes per i18n standards). ZH/JA skip this — they contract.';
+  if (m.includes('gloss')) r = 'Glossary tab: add corporate terms. Validator flags every label that violates them.';
+  if (m.includes('admin') || m.includes('mode')) r = 'Toggle Translator/Admin at top-right. Admin unlocks Scan, Validator, DEX, Browser.';
+  if (m.includes('export')) r = 'Export tab: CSV (Excel-safe UTF-8), JSON, Report, Missing CSV.';
+  if (m.includes('hi') || m.includes('hello')) r = 'Hello! 👋 Paste HTML and press ANALYZE.';
+  setTimeout(() => botMsg(r), 400);
+}
+
+function download(content, filename, type) {
+  let blob = new Blob(["\ufeff"+content], { type });
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+function csvCell(s) { return '"' + (s||'').replace(/"/g,'""') + '"'; }
+
+function exportCSV() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  let csv = 'No,Label,Risk,DE,DE_Exp%,FR,FR_Exp%,ZH,JA,ES,ES_Exp%,PT,PT_Exp%\r\n';
+  data.labels.forEach((l,i) => {
+    let t = trans[i]||{};
+    let ex = k => { let e = expansion(l.text, t[k], k); return e ? e.pct : ''; };
+    csv += [i+1, csvCell(l.text), l.risk, csvCell(t.de), ex('de'), csvCell(t.fr), ex('fr'), csvCell(t.zh), csvCell(t.ja), csvCell(t.es), ex('es'), csvCell(t.pt), ex('pt')].join(',') + '\r\n';
+  });
+  download(csv, 'magnifier_pro_1.0.csv', 'text/csv;charset=utf-8');
+  botMsg('✅ CSV downloaded');
+}
+function exportJSON() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  download(JSON.stringify({ version:'PRO 1.0', labels:data.labels, translations:trans, glossary }, null, 2), 'magnifier_pro_1.0.json', 'application/json');
+  botMsg('✅ JSON downloaded');
+}
+function exportReport() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  let r = 'MAGNIFIER PRO 1.0 Report\r\n' + '='.repeat(50) + '\r\n';
+  r += 'Labels: ' + data.labels.length + ' | Expansion warnings: ' + countExpansionWarnings() + '\r\n';
+  LANGS.forEach(([k,n]) => { if (data[k].length) r += n + ': ' + Math.round(filledCount(k)/data.labels.length*100) + '% complete\r\n'; });
+  r += '\r\nVALIDATION ISSUES\r\n' + '-'.repeat(50) + '\r\n';
+  (window._issues||[]).forEach(x => r += '[' + x.sev.toUpperCase() + '] ' + x.label + ' — ' + x.issue + '\r\n');
+  r += '\r\nLABELS\r\n' + '-'.repeat(50) + '\r\n';
+  data.labels.forEach((l,i) => {
+    let t = trans[i]||{};
+    r += (i+1) + '. ' + l.text + ' [' + l.risk + ']\r\n   DE:' + (t.de||'-') + ' | FR:' + (t.fr||'-') + ' | ZH:' + (t.zh||'-') + ' | JA:' + (t.ja||'-') + ' | ES:' + (t.es||'-') + ' | PT:' + (t.pt||'-') + '\r\n';
+  });
+  download(r, 'magnifier_pro_1.0_report.txt', 'text/plain;charset=utf-8');
+  botMsg('✅ Report downloaded');
+}
+function exportMissing() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  let csv = 'Language,Missing Label\r\n';
+  LANGS.forEach(([k,n]) => {
+    if (!data[k].length) return;
+    data.labels.forEach((l,i) => { if (!trans[i] || !trans[i][k]) csv += n + ',' + csvCell(l.text) + '\r\n'; });
+  });
+  download(csv, 'magnifier_pro_1.0_missing.csv', 'text/csv;charset=utf-8');
+  botMsg('✅ Missing CSV downloaded');
+}
+
+botMsg('Hi! 👋 MAGNIFIER PRO 1.0 ready. Paste HTML → ANALYZE.');
+</script>
+
+</body>
+</html>
