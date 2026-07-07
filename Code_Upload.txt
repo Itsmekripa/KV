@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MAGNIFIER PRO 1.7</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100vh; font-family: 'Segoe UI', Arial, sans-serif; background: #eef4f8; color: #1e293b; overflow: hidden; }
+
+.header { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; padding: 10px 18px; display: flex; align-items: center; gap: 12px; box-shadow: 0 3px 8px rgba(0,112,173,0.35); }
+.logo { font-size: 22px; }
+.title { flex: 1; }
+.title h1 { font-size: 17px; letter-spacing: 1px; }
+.title p { font-size: 10px; opacity: 0.85; }
+.mode-toggle { display: flex; background: rgba(255,255,255,0.15); border-radius: 20px; padding: 3px; }
+.mode-btn { padding: 5px 14px; border: none; background: none; color: white; font-size: 10px; font-weight: 700; border-radius: 16px; cursor: pointer; }
+.mode-btn.active { background: white; color: #0070AD; }
+.version { background: #FFB40C; color: #4a3200; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+
+.pagebar { background: #0a2a44; color: #bfe3f5; padding: 5px 18px; font-size: 10px; display: flex; gap: 16px; align-items: center; }
+.pagebar b { color: white; }
+
+.tabs { background: #0F3250; padding: 0 15px; display: flex; height: 38px; align-items: stretch; }
+.tab { padding: 0 14px; border: none; background: none; cursor: pointer; font-size: 11px; font-weight: 600; color: #8fb8d4; border-bottom: 3px solid transparent; }
+.tab:hover { color: white; background: #17466e; }
+.tab.active { color: #12ABDB; border-bottom-color: #12ABDB; background: #17466e; }
+.admin-only { display: none; }
+body.admin .admin-only { display: block; }
+
+.main { display: flex; width: 100%; height: calc(100vh - 110px); gap: 8px; padding: 8px; }
+.tab-content { display: flex; flex: 1; gap: 8px; }
+.panel { background: white; border-radius: 8px; box-shadow: 0 2px 6px rgba(15,50,80,0.12); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #d3e3ef; }
+.panel-header { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; padding: 8px 12px; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.panel-body { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; }
+
+.input-group { margin-bottom: 6px; }
+.input-label { font-size: 10px; font-weight: 700; color: #0070AD; margin-bottom: 2px; }
+textarea { width: 100%; padding: 5px; border: 2px solid #b3d7ea; border-radius: 4px; font-size: 9px; font-family: monospace; resize: vertical; min-height: 34px; background: #f5fafd; }
+textarea:focus { outline: none; border-color: #0070AD; background: white; }
+
+.btn-row { display: flex; gap: 6px; margin-top: 8px; }
+.btn { padding: 8px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; }
+.btn-primary { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; flex: 1; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary { background: #dce8f0; color: #0F3250; flex: 1; }
+.btn-secondary:hover { background: #c5d9e6; }
+.btn-small { padding: 5px 10px; font-size: 10px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat-card { background: linear-gradient(135deg, #e6f3fa, #d4ecf7); padding: 12px; border-radius: 6px; border-left: 4px solid #0070AD; }
+.stat-label { font-size: 9px; color: #0070AD; font-weight: 700; text-transform: uppercase; }
+.stat-value { font-size: 24px; font-weight: 800; color: #005a8c; }
+
+table { width: 100%; border-collapse: collapse; font-size: 10px; }
+th { background: #0070AD; color: white; padding: 7px 6px; text-align: left; font-weight: 700; position: sticky; top: 0; z-index: 1; }
+td { padding: 7px 6px; border-bottom: 1px solid #e0ecf4; vertical-align: middle; }
+tr:nth-child(even) { background: #f8fbfd; }
+tr:hover { background: #eaf5fb; }
+
+.badge { display: inline-block; padding: 2px 6px; border-radius: 10px; font-size: 9px; font-weight: 700; }
+.badge-high { background: #dc2626; color: white; }
+.badge-med { background: #FFB40C; color: #4a3200; }
+.badge-low { background: #2EA44F; color: white; }
+.badge-grey { background: #94a3b8; color: white; }
+
+.chip { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; padding: 3px 7px; border-radius: 10px; font-size: 10px; font-weight: 800; }
+.chip-ok { background: #e7f6ec; color: #14532d; border: 1px solid #b8e3c6; }
+.chip-miss { background: #fde8e8; color: #991b1b; border: 1px solid #f5bcbc; }
+.chip-warn { background: #fff7dc; color: #7c5800; border: 1px solid #f2df9a; }
+.chip-na { background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+.toolbar { display: flex; gap: 8px; align-items: center; padding: 8px 10px; background: #f5fafd; border-bottom: 1px solid #d3e3ef; flex-wrap: wrap; }
+.toolbar input[type="text"] { flex: 1; min-width: 130px; padding: 6px 10px; border: 2px solid #b3d7ea; border-radius: 4px; font-size: 10px; }
+.toolbar label { font-size: 10px; font-weight: 700; color: #0070AD; display: flex; align-items: center; gap: 4px; }
+.toolbar select { padding: 6px 8px; border: 2px solid #b3d7ea; border-radius: 4px; font-size: 10px; font-weight: 700; color: #0070AD; background: white; }
+.view-toggle { display: flex; border: 2px solid #b3d7ea; border-radius: 6px; overflow: hidden; }
+.view-toggle button { border: none; background: white; color: #0070AD; padding: 6px 12px; font-size: 10px; font-weight: 700; cursor: pointer; }
+.view-toggle button.active { background: #0070AD; color: white; }
+
+.tr-input { width: 100%; padding: 7px 9px; border: 2px solid #d3e3ef; border-radius: 5px; font-size: 11px; background: white; }
+.tr-input:focus { outline: none; border-color: #0070AD; box-shadow: 0 0 0 2px rgba(0,112,173,0.12); }
+.tr-input.is-miss { border-color: #f5bcbc; background: #fffafa; }
+.en-label { font-weight: 700; color: #0F3250; font-size: 11px; }
+.cat-tag { font-size: 9px; color: #5a7a90; }
+
+details { margin-bottom: 8px; border: 1px solid #d3e3ef; border-radius: 6px; overflow: hidden; }
+details summary { cursor: pointer; padding: 8px 12px; background: #e6f3fa; font-weight: 700; font-size: 11px; color: #005a8c; list-style: none; display: flex; align-items: center; gap: 8px; }
+details summary::before { content: '▸'; transition: transform 0.15s; }
+details[open] summary::before { transform: rotate(90deg); }
+details .det-body { padding: 6px; }
+details.sec-red summary { background: #fde8e8; color: #991b1b; }
+details.sec-amber summary { background: #fff7dc; color: #7c5800; }
+details.sec-green summary { background: #e7f6ec; color: #14532d; }
+
+.progress { height: 10px; background: #e0ecf4; border-radius: 5px; overflow: hidden; flex: 1; }
+.progress > div { height: 100%; border-radius: 5px; }
+.langrow { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; font-size: 11px; }
+.langrow .ln { width: 30px; font-weight: 700; color: #005a8c; }
+.langrow .pc { width: 46px; text-align: right; font-weight: 700; }
+
+.problem { padding: 8px 10px; border-left: 4px solid #dc2626; background: #fdf5f5; border-radius: 4px; margin-bottom: 6px; font-size: 11px; cursor: pointer; }
+.problem:hover { background: #fde8e8; }
+.problem.warn { border-left-color: #FFB40C; background: #fffaf0; }
+.problem.warn:hover { background: #fff7dc; }
+
+.export-card { background: #f5fafd; border: 2px solid #b3d7ea; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.export-card h4 { color: #005a8c; font-size: 12px; margin-bottom: 4px; }
+.export-card p { font-size: 10px; color: #5a7a90; margin-bottom: 8px; }
+.export-btn { padding: 8px 16px; background: #2EA44F; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 11px; }
+.export-btn:hover { background: #268a42; }
+
+.chat-panel { flex: 0 0 250px; display: flex; flex-direction: column; }
+.chat-header { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; padding: 10px 12px; display: flex; align-items: center; gap: 8px; }
+.chat-avatar { width: 30px; height: 30px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.chat-header-info h4 { font-size: 12px; }
+.chat-header-info span { font-size: 9px; opacity: 0.85; display: flex; align-items: center; gap: 4px; }
+.online-dot { width: 7px; height: 7px; background: #4ade80; border-radius: 50%; display: inline-block; }
+.chat-messages { flex: 1; overflow-y: auto; padding: 10px; background: #eef4f8; display: flex; flex-direction: column; gap: 8px; }
+.msg-row { display: flex; gap: 6px; align-items: flex-end; }
+.msg-row.user { flex-direction: row-reverse; }
+.msg-avatar { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.msg-avatar.bot { background: #0070AD; }
+.msg-avatar.usr { background: #FFB40C; }
+.msg { padding: 8px 10px; border-radius: 12px; font-size: 10px; line-height: 1.4; max-width: 80%; white-space: pre-line; }
+.msg-bot { background: white; color: #1e293b; border-bottom-left-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.msg-user { background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; border-bottom-right-radius: 3px; }
+.chat-input { display: flex; gap: 6px; padding: 10px; background: white; border-top: 2px solid #e0ecf4; }
+.chat-input input { flex: 1; padding: 8px 12px; border: 2px solid #b3d7ea; border-radius: 18px; font-size: 10px; }
+.chat-input input:focus { outline: none; border-color: #0070AD; }
+.chat-input button { width: 34px; height: 34px; background: linear-gradient(135deg, #0070AD, #12ABDB); color: white; border: none; border-radius: 50%; cursor: pointer; font-size: 13px; }
+
+.hidden { display: none !important; }
+.scrolly { width: 100%; height: 100%; overflow: auto; }
+.prop { font-family: monospace; font-size: 9px; color: #0070AD; background: #e6f3fa; padding: 2px 4px; border-radius: 3px; }
+.section-title { font-size: 12px; font-weight: 800; color: #005a8c; margin: 10px 0 6px; }
+input[type="file"] { font-size: 10px; margin-bottom: 8px; width: 100%; }
+.ws-input { width: 100%; padding: 6px; border: 2px solid #b3d7ea; border-radius: 4px; font-size: 10px; background: white; }
+.ws-input:focus { outline: none; border-color: #0070AD; }
+
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: #dce8f0; }
+::-webkit-scrollbar-thumb { background: #0070AD; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">🔍</div>
+  <div class="title"><h1>MAGNIFIER PRO</h1><p>Multi-Language Automation Intelligence Platform</p></div>
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="modeTranslator" onclick="setMode('translator')">👤 Translator</button>
+    <button class="mode-btn" id="modeAdmin" onclick="setMode('admin')">⚙️ Admin</button>
+  </div>
+  <div class="version">PRO 1.7</div>
+</div>
+
+<div class="pagebar">
+  <span>📄 Page: <b id="pbTitle">—</b></span>
+  <span>🏷️ Labels: <b id="pbLabels">0</b></span>
+  <span>🌍 Languages: <b id="pbLangs">0</b></span>
+  <span>🕒 Analyzed: <b id="pbTime">—</b></span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="dashboard" onclick="goTab('dashboard')">🏠 Dashboard</button>
+  <button class="tab" data-tab="translations" onclick="goTab('translations')">📂 Translations</button>
+  <button class="tab" data-tab="automation" onclick="goTab('automation')">🛠️ Automation</button>
+  <button class="tab" data-tab="testcases" onclick="goTab('testcases')">🧪 Test Cases</button>
+  <button class="tab" data-tab="glossary" onclick="goTab('glossary')">📖 Glossary</button>
+  <button class="tab admin-only" data-tab="validator" onclick="goTab('validator')">✅ Validator</button>
+  <button class="tab admin-only" data-tab="browser" onclick="goTab('browser')">🌐 Browser</button>
+  <button class="tab" data-tab="export" onclick="goTab('export')">📥 Export</button>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="tab-content">
+    <div class="panel" style="flex: 0 0 26%;">
+      <div class="panel-header">📝 Input HTML</div>
+      <div class="panel-body">
+        <div class="input-label">📂 BATCH UPLOAD (select saved .html files)</div>
+        <input type="file" id="batchFiles" multiple accept=".html,.htm,.txt" onchange="loadBatch(event)">
+        <p style="color:#5a7a90;font-size:9px;margin-bottom:8px;">Filenames containing _en/_de/_fr/_zh/_ja/_es/_pt auto-fill the right box.</p>
+        <div class="input-group"><div class="input-label">🇬🇧 ENGLISH (source)</div><textarea id="en"></textarea></div>
+        <div class="input-group"><div class="input-label">🇩🇪 DEUTSCH</div><textarea id="de"></textarea></div>
+        <div class="input-group"><div class="input-label">🇫🇷 FRANÇAIS</div><textarea id="fr"></textarea></div>
+        <div class="input-group"><div class="input-label">🇨🇳 中文</div><textarea id="zh"></textarea></div>
+        <div class="input-group"><div class="input-label">🇯🇵 日本語</div><textarea id="ja"></textarea></div>
+        <div class="input-group"><div class="input-label">🇪🇸 ESPAÑOL</div><textarea id="es"></textarea></div>
+        <div class="input-group"><div class="input-label">🇵🇹 PORTUGUÊS</div><textarea id="pt"></textarea></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="analyze()">▶ ANALYZE</button>
+          <button class="btn btn-secondary" onclick="clearAll()">CLEAR</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="flex: 1;">
+      <div class="panel-header">🏠 Health Overview</div>
+      <div class="panel-body" id="dashBody">
+        <p style="color:#5a7a90;">Paste HTML (or batch-upload files) and press ANALYZE. This dashboard shows overall health — detail lives in the other tabs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSLATIONS -->
+  <div id="translations" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">📂 Translations</div>
+      <div class="toolbar">
+        <div class="view-toggle">
+          <button id="vwFocus" class="active" onclick="setTrView('focus')">✏️ Edit one language</button>
+          <button id="vwAll" onclick="setTrView('all')">👁 Overview (all)</button>
+        </div>
+        <select id="trLang" onchange="renderTranslations()">
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="zh">🇨🇳 中文</option>
+          <option value="ja">🇯🇵 日本語</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="pt">🇵🇹 Português</option>
+        </select>
+        <select id="trCat" onchange="renderTranslations()">
+          <option value="all">All categories</option>
+          <option value="buttons">🔘 Buttons</option>
+          <option value="links">🔗 Links</option>
+          <option value="headings">📌 Headings</option>
+          <option value="labels">🏷️ Form Labels</option>
+          <option value="text">📝 Text</option>
+        </select>
+        <input type="text" id="trSearch" placeholder="🔍 Search..." oninput="renderTranslations()">
+        <label><input type="checkbox" id="trMissing" onchange="renderTranslations()"> Missing only</label>
+      </div>
+      <div class="scrolly"><div class="panel-body" id="trBody">Run ANALYZE first</div></div>
+    </div>
+  </div>
+
+  <!-- AUTOMATION -->
+  <div id="automation" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">🛠️ Automation Readiness (No-XPath Policy)</div>
+      <div class="scrolly"><div class="panel-body" id="autoBody">Run ANALYZE first</div></div>
+    </div>
+  </div>
+
+  <!-- TEST CASES -->
+  <div id="testcases" class="tab-content hidden">
+    <div class="panel" style="flex: 0 0 32%;">
+      <div class="panel-header">🧪 Test Case Input</div>
+      <div class="panel-body">
+        <button class="btn btn-secondary btn-small" style="width:100%;margin-bottom:10px;" onclick="downloadTemplate()">📋 Download Test Case Template (CSV)</button>
+        <div class="input-label">UPLOAD TEST SHEET (CSV saved from Excel)</div>
+        <input type="file" id="tcFile" accept=".csv,.txt" onchange="loadTcFile(event)">
+        <div class="input-label">OR PASTE TEST STEPS / DESCRIPTIONS</div>
+        <textarea id="tcText" style="min-height:180px;" placeholder='Paste steps. Quoted labels like "My Account", "Create Account", "Log In" are extracted and mapped.'></textarea>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="mapTestCases()">🔗 MAP STEPS</button>
+          <button class="btn btn-secondary" onclick="clearTc()">CLEAR</button>
+        </div>
+        <p style="margin-top:10px;color:#5a7a90;font-size:10px;">Read-only over the analysis — never modifies matching results.</p>
+      </div>
+    </div>
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">🔗 Test Step → Translation Mapping</div>
+      <div class="scrolly"><div class="panel-body" id="tcResult">Run ANALYZE, then paste steps and click MAP STEPS.</div></div>
+    </div>
+  </div>
+
+  <!-- GLOSSARY -->
+  <div id="glossary" class="tab-content hidden">
+    <div class="panel" style="flex: 0 0 30%;">
+      <div class="panel-header">📖 Add Glossary Term</div>
+      <div class="panel-body">
+        <div class="input-label">EN TERM</div>
+        <input class="ws-input" id="gEn" placeholder="e.g. Sign In" style="margin-bottom:8px;">
+        <div class="input-label">LANGUAGE</div>
+        <select id="gLang" class="ws-input" style="margin-bottom:8px;"><option value="de">DE</option><option value="fr">FR</option><option value="zh">ZH</option><option value="ja">JA</option><option value="es">ES</option><option value="pt">PT</option></select>
+        <div class="input-label">REQUIRED TRANSLATION</div>
+        <input class="ws-input" id="gTerm" placeholder="e.g. Anmelden" style="margin-bottom:8px;">
+        <button class="btn btn-primary" style="width:100%;" onclick="addGloss()">➕ ADD TERM</button>
+      </div>
+    </div>
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">📖 Corporate Glossary</div>
+      <div class="scrolly"><table>
+        <thead><tr><th>EN Term</th><th>Lang</th><th>Required Translation</th><th></th></tr></thead>
+        <tbody id="glossBody"><tr><td colspan="4" style="text-align:center;padding:30px;">No terms yet</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+  <!-- VALIDATOR (admin) -->
+  <div id="validator" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">✅ Validator — Quality + Glossary + Expansion</div>
+      <div class="scrolly"><div class="panel-body" id="validatorBody">Run ANALYZE first</div></div>
+    </div>
+  </div>
+
+  <!-- BROWSER (admin) -->
+  <div id="browser" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">🌐 Browser Compatibility</div>
+      <div class="panel-body">
+        <table><tr><th>Browser</th><th>Status</th><th>Notes</th></tr>
+        <tr><td>Chrome</td><td><span class="badge badge-low">OK</span></td><td>innerText works. Element IDs come from server HTML — same across browsers</td></tr>
+        <tr><td>Edge</td><td><span class="badge badge-low">OK</span></td><td>Same engine as Chrome</td></tr>
+        <tr><td>Firefox</td><td><span class="badge badge-med">CHECK</span></td><td><b>Use outerText, not innerText, in DEX bulk runs (TCL0003)</b></td></tr></table>
+        <div class="section-title">Key facts</div>
+        <p>• IDs do NOT change per browser — they change per session/render (dynamic IDs, flagged HIGH).<br>• innerText/outerText behavior differs in Firefox — that's the TCL0003 fix.<br>• All exports carry UTF-8 BOM so Excel renders CJK correctly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT -->
+  <div id="export" class="tab-content hidden">
+    <div class="panel" style="flex:1;">
+      <div class="panel-header">📥 Export (UTF-8)</div>
+      <div class="panel-body">
+        <div class="export-card"><h4>📊 Full CSV</h4><p>Labels, category, risk, translations, match status.</p><button class="export-btn" onclick="exportCSV()">Download CSV</button></div>
+        <div class="export-card"><h4>🛠️ Tosca CSV</h4><p>ID, properties, best/alternative property, confidence, risk, control. No XPath.</p><button class="export-btn" onclick="exportTosca()">Download Tosca CSV</button></div>
+        <div class="export-card"><h4>🧪 Test Case Mapping CSV</h4><p>Step labels mapped to page labels + translations.</p><button class="export-btn" onclick="exportTestMap()">Download Test Map CSV</button></div>
+        <div class="export-card"><h4>📄 JSON</h4><p>Full data incl. glossary + match diagnostics (with match-method breakdown).</p><button class="export-btn" onclick="exportJSON()">Download JSON</button></div>
+        <div class="export-card"><h4>📋 Text Report</h4><p>Summary with validation issues + diagnostics.</p><button class="export-btn" onclick="exportReport()">Download Report</button></div>
+        <div class="export-card"><h4>📊 Missing CSV</h4><p>Every blank/unmatched label per language.</p><button class="export-btn" onclick="exportMissing()">Download Missing CSV</button></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHATBOT -->
+  <div class="chat-panel panel">
+    <div class="chat-header">
+      <div class="chat-avatar">🤖</div>
+      <div class="chat-header-info"><h4>MAGNIFIER Bot</h4><span><span class="online-dot"></span> Data-aware</span></div>
+    </div>
+    <div class="chat-messages" id="chat"></div>
+    <div class="chat-input">
+      <input id="chatinput" placeholder="Ask: de missing? top risks?" onkeypress="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()">➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let data = { labels: [], en: [], de: [], fr: [], zh: [], ja: [], es: [], pt: [] };
+let trans = {};
+let glossary = [];
+let testMap = [];
+let currentTab = 'dashboard';
+let trView = 'focus';
+let dirty = {};
+const LANGS = [['de','DE'],['fr','FR'],['zh','ZH'],['ja','JA'],['es','ES'],['pt','PT']];
+const CJK = ['zh','ja'];
+const CATS = [
+  { key: 'buttons', name: '🔘 Buttons', tags: ['button','input'] },
+  { key: 'links', name: '🔗 Links', tags: ['a'] },
+  { key: 'headings', name: '📌 Headings', tags: ['h1','h2','h3'] },
+  { key: 'labels', name: '🏷️ Form Labels', tags: ['label'] },
+  { key: 'text', name: '📝 Text', tags: ['span','p'] }
+];
+
+window._matchDiag = window._matchDiag || {};
+window._pageTitle = '';
+
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function normText(s) { return (s || '').trim().replace(/\s+/g, ' ').toLowerCase(); }
+function simText(a, b) {
+  let ta = normText(a).split(' '), tb = normText(b).split(' ');
+  if (!ta.length || !tb.length) return 0;
+  let hit = ta.filter(w => tb.includes(w)).length;
+  return hit / Math.max(ta.length, tb.length);
+}
+
+function setMode(m) {
+  document.body.classList.toggle('admin', m === 'admin');
+  document.getElementById('modeTranslator').classList.toggle('active', m === 'translator');
+  document.getElementById('modeAdmin').classList.toggle('active', m === 'admin');
+  if (m === 'translator') {
+    let active = document.querySelector('.tab.active');
+    if (active && active.classList.contains('admin-only')) goTab('dashboard');
+  }
+  botMsg(m === 'admin' ? '⚙️ Admin mode: Validator + Browser unlocked.' : '👤 Translator mode.');
+}
+
+const RENDERERS = {
+  dashboard: () => renderDashboard(),
+  translations: () => renderTranslations(),
+  automation: () => renderAutomation(),
+  validator: () => renderValidator(),
+  glossary: () => renderGloss()
+};
+function markAllDirty() { Object.keys(RENDERERS).forEach(k => dirty[k] = true); }
+function renderIfDirty(tab) { if (dirty[tab] && RENDERERS[tab]) { RENDERERS[tab](); dirty[tab] = false; } }
+function goTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+  document.getElementById(tab).classList.remove('hidden');
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  renderIfDirty(tab);
+}
+function setTrView(v) {
+  trView = v;
+  document.getElementById('vwFocus').classList.toggle('active', v === 'focus');
+  document.getElementById('vwAll').classList.toggle('active', v === 'all');
+  document.getElementById('trLang').style.display = v === 'focus' ? '' : 'none';
+  renderTranslations();
+}
+
+/* Batch upload */
+function loadBatch(ev) {
+  let files = Array.from(ev.target.files || []);
+  if (!files.length) return;
+  let assigned = 0;
+  files.forEach(f => {
+    let n = f.name.toLowerCase();
+    let lang = null;
+    ['en','de','fr','zh','ja','es','pt'].forEach(l => {
+      if (new RegExp('(^|[_\\-.])' + l + '([_\\-.]|$)').test(n.replace(/\.html?$|\.txt$/,''))) lang = l;
+    });
+    if (!lang) return;
+    let reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById(lang).value = e.target.result;
+      assigned++;
+      botMsg('📂 ' + f.name + ' → ' + lang.toUpperCase());
+    };
+    reader.readAsText(f, 'utf-8');
+  });
+  setTimeout(() => { if (!assigned) botMsg('⚠️ Could not detect language from filenames. Name files like page_en.html, page_de.html'); }, 500);
+}
+
+function parse(html, wantTitle) {
+  let doc = new DOMParser().parseFromString(html, 'text/html');
+  if (wantTitle) window._pageTitle = (doc.querySelector('title') ? doc.querySelector('title').textContent.trim() : '') || 'Untitled page';
+  ['script','style'].forEach(t => doc.querySelectorAll(t).forEach(el => el.remove()));
+  let labels = [];
+  doc.querySelectorAll('h1,h2,h3,button,a,label,span,p,input[type=button],input[type=submit]').forEach(el => {
+    let text = (el.textContent || el.value || '').trim().replace(/\s+/g,' ');
+    if (text && text.length > 1 && text.length < 100) {
+      let id = el.id || '';
+      let cls = (typeof el.className === 'string' ? el.className : '') || '';
+      labels.push({
+        text: text.substring(0,40),
+        tag: el.tagName.toLowerCase(),
+        id: id,
+        name: el.getAttribute('name') || '',
+        aria: el.getAttribute('aria-label') || '',
+        testid: el.getAttribute('data-testid') || el.getAttribute('data-test-id') || '',
+        role: el.getAttribute('role') || '',
+        cls: cls,
+        dynId: /\d{6,}|[0-9a-f]{8}-[0-9a-f]{4}/i.test(id),
+        dynCls: /(^|\s)(css-|sc-|jsx-)|[a-z0-9]{10,}/i.test(cls) && cls.length > 15,
+        risk: /\d{6,}/.test(id) ? 'HIGH' : 'LOW'
+      });
+    }
+  });
+  return labels;
+}
+
+/* ============================================================
+   SMART MATCHING v2 (PRO 1.7) — false-positive fix
+   P0: stable identifier match (data-testid > name > stable id)
+       — identifiers are language-independent, unique keys only
+   P1: identical normalized text + same tag (numbers, brands)
+   P2/P3: positional rules — ONLY when EN and target counts are
+       IDENTICAL (structures aligned)
+   STRICT MODE: counts differ → P0 and P1 only.
+   No confident match = BLANK_UNMATCHED. Never force.
+   A wrong translation must fail — false PASS is not acceptable.
+   ============================================================ */
+function analyze() {
+  let en = document.getElementById('en').value.trim();
+  if (!en) { botMsg('⚠️ Paste English HTML first!'); return; }
+  data = { labels: [], en: [], de: [], fr: [], zh: [], ja: [], es: [], pt: [] };
+  trans = {};
+  window._matchDiag = {};
+
+  data.en = parse(en, true);
+  ['de','fr','zh','ja','es','pt'].forEach(l => {
+    let v = document.getElementById(l).value.trim();
+    if (v) data[l] = parse(v, false);
+  });
+
+  data.labels = data.en.map((el, i) => ({ ...el, _enIndex: i }));
+  data.labels.forEach((l, i) => { trans[i] = { de:'', fr:'', zh:'', ja:'', es:'', pt:'' }; });
+
+  // Stable, language-independent identifier key for an element
+  function identKey(el) {
+    if (el.testid) return 'tid:' + el.testid;
+    if (el.name) return 'name:' + el.name;
+    if (el.id && !el.dynId) return 'id:' + el.id;
+    return null;
+  }
+
+  ['de','fr','zh','ja','es','pt'].forEach(lang => {
+    if (!data[lang].length) return;
+
+    let candidates = data[lang].map((el, j) => ({ ...el, _idx: j, _used: false }));
+    let strictMode = data[lang].length !== data.labels.length;
+    let matched = 0, byIdent = 0, byText = 0, byIndex = 0;
+
+    // Identifier lookup for target — only UNIQUE keys are trustworthy
+    let identMap = {}, identCount = {};
+    candidates.forEach(c => {
+      let k = identKey(c);
+      if (k) { identCount[k] = (identCount[k] || 0) + 1; identMap[k] = c; }
+    });
+
+    data.labels.forEach((label, i) => {
+      let hit = null;
+
+      // P0: stable identifier — highest confidence, survives structure shifts
+      let ik = identKey(label);
+      if (ik && identCount[ik] === 1) {
+        let c = identMap[ik];
+        if (c && !c._used && c.tag === label.tag) { hit = c; byIdent++; }
+      }
+
+      // P1: identical normalized text + same tag
+      if (!hit) {
+        let c = candidates.find(k => !k._used && k.tag === label.tag && normText(k.text) === normText(label.text));
+        if (c) { hit = c; byText++; }
+      }
+
+      // Positional rules ONLY when structures are aligned (counts identical)
+      if (!hit && !strictMode) {
+        // P2: exact index + same tag
+        let c = candidates[i];
+        if (c && !c._used && c.tag === label.tag) { hit = c; byIndex++; }
+        // P3: nearest ±2 same tag
+        if (!hit) {
+          let near = candidates.filter(k => !k._used && k.tag === label.tag && Math.abs(k._idx - i) <= 2);
+          near.sort((a,b) => Math.abs(a._idx - i) - Math.abs(b._idx - i));
+          if (near[0]) { hit = near[0]; byIndex++; }
+        }
+        // P4: similar text ±5 same tag
+        if (!hit) {
+          let c2 = candidates.find(k => !k._used && k.tag === label.tag && Math.abs(k._idx - i) <= 5 && simText(k.text, label.text) >= 0.6);
+          if (c2) { hit = c2; byIndex++; }
+        }
+      }
+
+      // No confident match → BLANK_UNMATCHED. Never force.
+      if (hit) { hit._used = true; trans[i][lang] = hit.text; matched++; }
+      else trans[i][lang] = '';
+    });
+
+    window._matchDiag[lang] = {
+      total_en: data.labels.length,
+      total_target: data[lang].length,
+      matched: matched,
+      blank_unmatched: data.labels.length - matched,
+      count_mismatch: strictMode,
+      strict_mode: strictMode,
+      by_identifier: byIdent,
+      by_identical_text: byText,
+      by_position: byIndex
+    };
+  });
+
+  computeDups();
+  updatePagebar();
+  markAllDirty();
+  goTab('dashboard');
+  renderIfDirty(currentTab);
+
+  botMsg('✅ ' + data.labels.length + ' labels analyzed (matching v2 — strict on structure shift).');
+  LANGS.forEach(([k, n]) => {
+    let d = window._matchDiag[k];
+    if (d && d.strict_mode) {
+      botMsg('🔒 ' + n + ' STRICT MODE: counts differ (' + d.total_target + ' vs ' + d.total_en + '). Position matching disabled — only identifier & identical-text matches accepted. ' + d.blank_unmatched + ' left blank (correct behavior, not a bug).');
+    }
+  });
+}
+
+function updatePagebar() {
+  document.getElementById('pbTitle').textContent = window._pageTitle || '—';
+  document.getElementById('pbLabels').textContent = data.labels.length;
+  document.getElementById('pbLangs').textContent = ['en','de','fr','zh','ja','es','pt'].filter(l=>data[l].length).length;
+  document.getElementById('pbTime').textContent = new Date().toLocaleTimeString();
+}
+
+function expansion(src, tgt, lang) {
+  if (!tgt) return null;
+  let r = tgt.length / Math.max(src.length, 1);
+  let pct = Math.round((r - 1) * 100);
+  if (CJK.includes(lang)) return { pct, level: 'low' };
+  if (r > 1.5) return { pct, level: 'high' };
+  if (r > 1.3) return { pct, level: 'med' };
+  return { pct, level: 'low' };
+}
+function countExpansionWarnings() {
+  let n = 0;
+  data.labels.forEach((l,i) => LANGS.forEach(([k]) => {
+    let e = expansion(l.text, (trans[i]||{})[k], k);
+    if (e && e.level !== 'low') n++;
+  }));
+  return n;
+}
+function filledCount(lang) {
+  let f = 0;
+  data.labels.forEach((l,i) => { if (trans[i] && trans[i][lang]) f++; });
+  return f;
+}
+function matchStatus(i, lang) { return (trans[i] && trans[i][lang]) ? 'MATCHED' : 'BLANK_UNMATCHED'; }
+
+/* TOSCA — NO XPATH */
+function toscaRecommend(l, dupIds, dupNames) {
+  let props = [];
+  if (l.testid) props.push({ p: 'data-testid="' + l.testid + '"', score: 95 });
+  if (l.name) props.push({ p: 'name="' + l.name + '"', score: dupNames[l.name] > 1 ? 55 : 90 });
+  if (l.aria) props.push({ p: 'aria-label="' + l.aria + '"', score: 85 });
+  if (l.id && !l.dynId) props.push({ p: 'id="' + l.id + '"', score: dupIds[l.id] > 1 ? 45 : 80 });
+  if (l.role) props.push({ p: 'role="' + l.role + '"', score: 70 });
+  props.push({ p: 'innertext="' + l.text + '"', score: 60 });
+  props.sort((a,b) => b.score - a.score);
+  let best = props[0];
+  let alt = props[1] || { p: 'NEEDS-ATTRIBUTE (ask dev for data-testid)', score: 0 };
+  let conf = best.score;
+  if (l.dynId) conf -= 10;
+  if (l.dynCls) conf -= 10;
+  conf = Math.max(20, Math.min(98, conf));
+  let riskL = conf >= 80 ? 'LOW' : conf >= 60 ? 'MED' : 'HIGH';
+  let needsAttr = (best.p.indexOf('innertext=') === 0) && (l.dynId || l.dynCls);
+  if (needsAttr) { riskL = 'HIGH'; alt = { p: 'NEEDS-ATTRIBUTE (ask dev for data-testid)', score: 0 }; }
+  let ctrl = { button: 'Button (Click)', a: 'Link (Click)', input: 'TextBox (Set)', label: 'Label (Verify)', span: 'Text (Verify)', p: 'Text (Verify)' }[l.tag] || 'Element (Verify)';
+  return { best, alt, conf, riskL, ctrl, needsAttr };
+}
+function propList(l) {
+  let out = [];
+  if (l.testid) out.push('data-testid=' + l.testid);
+  if (l.name) out.push('name=' + l.name);
+  if (l.aria) out.push('aria-label=' + l.aria);
+  if (l.role) out.push('role=' + l.role);
+  return out.join(' | ');
+}
+function computeDups() {
+  let dupIds = {}, dupNames = {};
+  data.labels.forEach(l => {
+    if (l.id) dupIds[l.id] = (dupIds[l.id]||0) + 1;
+    if (l.name) dupNames[l.name] = (dupNames[l.name]||0) + 1;
+  });
+  window._dups = { dupIds, dupNames };
+  return window._dups;
+}
+function catOf(l) {
+  for (let c of CATS) if (c.tags.includes(l.tag)) return c.key;
+  return 'text';
+}
+
+/* DASHBOARD */
+function renderDashboard() {
+  let total = data.labels.length;
+  if (!total) { document.getElementById('dashBody').innerHTML = '<p style="color:#5a7a90;">Paste HTML (or batch-upload files) and press ANALYZE.</p>'; return; }
+  let d = window._dups || computeDups();
+  let loaded = LANGS.filter(([k]) => data[k].length);
+  let totBlank = 0, totCells = 0;
+  loaded.forEach(([k]) => { totCells += total; totBlank += (total - filledCount(k)); });
+  let health = totCells ? Math.round((totCells - totBlank) / totCells * 100) : 0;
+  let recs = data.labels.map(l => toscaRecommend(l, d.dupIds, d.dupNames));
+  let ready = recs.filter(r => r.riskL === 'LOW').length;
+  let needsAttr = recs.filter(r => r.needsAttr).length;
+  let expw = countExpansionWarnings();
+
+  let html = '<div class="stats">' +
+    '<div class="stat-card"><div class="stat-label">Translation Health</div><div class="stat-value" style="color:' + (health>=80?'#2EA44F':health>=50?'#c98a00':'#dc2626') + ';">' + health + '%</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Blank Translations</div><div class="stat-value" style="color:#dc2626;">' + totBlank + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Tosca-Ready</div><div class="stat-value" style="color:#2EA44F;">' + (total ? Math.round(ready/total*100) : 0) + '%</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Needs Attribute</div><div class="stat-value" style="color:#dc2626;">' + needsAttr + '</div></div></div>';
+
+  html += '<div class="section-title">Per-language completeness</div>';
+  loaded.forEach(([k,n]) => {
+    let pct = total ? Math.round(filledCount(k)/total*100) : 0;
+    let col = pct>=80?'#2EA44F':pct>=50?'#FFB40C':'#dc2626';
+    let dg = window._matchDiag[k];
+    html += '<div class="langrow"><div class="ln">' + n + '</div><div class="progress"><div style="width:' + pct + '%;background:' + col + ';"></div></div><div class="pc">' + pct + '%</div>' + (dg && dg.strict_mode ? '<span class="badge badge-med">STRICT MODE</span>' : '') + '</div>';
+  });
+  if (!loaded.length) html += '<p style="color:#5a7a90;">Only EN loaded — add target languages for completeness tracking.</p>';
+
+  let problems = [];
+  loaded.forEach(([k,n]) => {
+    let blanks = total - filledCount(k);
+    if (blanks > 0) problems.push({ sev: blanks > total*0.2 ? 'red' : 'warn', text: n + ': ' + blanks + ' blank translations' + ((window._matchDiag[k]||{}).strict_mode ? ' (strict mode — structure differs)' : ''), tab: 'translations' });
+  });
+  if (needsAttr > 0) problems.push({ sev: 'red', text: needsAttr + ' elements need a stable attribute (ask dev for data-testid)', tab: 'automation' });
+  if (expw > 0) problems.push({ sev: 'warn', text: expw + ' expansion warnings (may break UI boxes)', tab: 'validator' });
+  let dynIds = data.labels.filter(l => l.dynId).length;
+  if (dynIds > 0) problems.push({ sev: 'warn', text: dynIds + ' dynamic IDs detected (session-generated — do not use for automation)', tab: 'automation' });
+  problems.sort((a,b) => (a.sev === 'red' ? 0 : 1) - (b.sev === 'red' ? 0 : 1));
+
+  html += '<div class="section-title">Top problems</div>';
+  html += problems.length
+    ? problems.slice(0,5).map(p => '<div class="problem ' + (p.sev==='warn'?'warn':'') + '" onclick="goTab(\'' + p.tab + '\')">' + esc(p.text) + ' →</div>').join('')
+    : '<p>✅ No major problems detected.</p>';
+
+  document.getElementById('dashBody').innerHTML = html;
+}
+
+/* TRANSLATIONS */
+function trStatusOf(i, l, k) {
+  let v = (trans[i]||{})[k] || '';
+  if (!data[k].length) return 'na';
+  if (!v) return 'miss';
+  let e = expansion(l.text, v, k);
+  if ((normText(v) === normText(l.text) && !CJK.includes(k)) || (e && e.level === 'high')) return 'warn';
+  return 'ok';
+}
+
+function renderTranslations() {
+  let total = data.labels.length;
+  if (!total) { document.getElementById('trBody').innerHTML = 'Run ANALYZE first'; return; }
+  let q = normText((document.getElementById('trSearch')||{}).value || '');
+  let missOnly = (document.getElementById('trMissing')||{}).checked;
+  let cat = (document.getElementById('trCat')||{}).value || 'all';
+  let lang = (document.getElementById('trLang')||{}).value || 'de';
+
+  let rows = [];
+  data.labels.forEach((l, i) => {
+    if (cat !== 'all' && catOf(l) !== cat) return;
+    if (q && !normText(l.text + ' ' + Object.values(trans[i]||{}).join(' ')).includes(q)) return;
+    if (missOnly) {
+      if (trView === 'focus') { if (trStatusOf(i, l, lang) !== 'miss') return; }
+      else { if (!LANGS.some(([k]) => trStatusOf(i, l, k) === 'miss')) return; }
+    }
+    rows.push({ l, i });
+  });
+
+  let html = '';
+  if (trView === 'focus') {
+    if (!data[lang].length) {
+      html = '<p style="padding:20px;color:#5a7a90;">No ' + lang.toUpperCase() + ' HTML loaded. Paste it on the Dashboard and re-run ANALYZE, or pick another language.</p>';
+    } else {
+      let done = filledCount(lang);
+      let dg = window._matchDiag[lang] || {};
+      html = '<p style="margin-bottom:8px;color:#5a7a90;">Editing <b>' + lang.toUpperCase() + '</b> — ' + done + '/' + total + ' filled.' + (dg.strict_mode ? ' <span class="badge badge-med">STRICT MODE</span> Structure differs from EN — blanks are expected, fill only confirmed translations.' : '') + '</p>';
+      html += '<table><tr><th style="width:34px;">#</th><th style="width:38%;">🇬🇧 English</th><th style="width:38%;">' + lang.toUpperCase() + ' (editable)</th><th style="width:80px;">Status</th><th>Size</th></tr>';
+      rows.forEach(({l, i}) => {
+        let v = (trans[i]||{})[lang] || '';
+        let st = trStatusOf(i, l, lang);
+        let chip = st === 'ok' ? '<span class="chip chip-ok">OK</span>' : st === 'warn' ? '<span class="chip chip-warn">CHECK</span>' : '<span class="chip chip-miss">MISSING</span>';
+        let e = expansion(l.text, v, lang);
+        let size = (v && e) ? '<span class="badge badge-' + e.level + '">' + (e.pct>0?'+':'') + e.pct + '%</span>' : '-';
+        html += '<tr><td>' + (i+1) + '</td>' +
+          '<td><div class="en-label">' + esc(l.text) + '</div><div class="cat-tag">' + catOf(l) + ' · ' + l.tag + '</div></td>' +
+          '<td><input class="tr-input tr-edit' + (st==='miss'?' is-miss':'') + '" data-idx="' + i + '" data-lang="' + lang + '" value="' + esc(v) + '" placeholder="Type ' + lang.toUpperCase() + ' translation..."></td>' +
+          '<td>' + chip + '</td><td>' + size + '</td></tr>';
+      });
+      html += '</table>';
+      if (!rows.length) html += '<p style="padding:16px;color:#5a7a90;">No rows match the current filter.</p>';
+    }
+  } else {
+    let shown = LANGS.filter(([k]) => data[k].length);
+    html = '<p style="margin-bottom:8px;color:#5a7a90;">Read-only overview. <b>✓</b> translated · <b>✗</b> missing · <b>!</b> suspicious. Switch to "Edit one language" to change values.</p>';
+    html += '<table><tr><th style="width:34px;">#</th><th>🇬🇧 English</th><th style="width:80px;">Category</th>' + shown.map(([k,n]) => '<th style="width:52px;text-align:center;">' + n + '</th>').join('') + '</tr>';
+    rows.forEach(({l, i}) => {
+      html += '<tr><td>' + (i+1) + '</td><td><span class="en-label">' + esc(l.text) + '</span></td><td><span class="cat-tag">' + catOf(l) + '</span></td>' +
+        shown.map(([k]) => {
+          let st = trStatusOf(i, l, k);
+          let c = st === 'ok' ? '<span class="chip chip-ok">✓</span>' : st === 'warn' ? '<span class="chip chip-warn">!</span>' : st === 'miss' ? '<span class="chip chip-miss">✗</span>' : '<span class="chip chip-na">–</span>';
+          return '<td style="text-align:center;">' + c + '</td>';
+        }).join('') + '</tr>';
+    });
+    html += '</table>';
+    if (!rows.length) html += '<p style="padding:16px;color:#5a7a90;">No rows match the current filter.</p>';
+  }
+
+  document.getElementById('trBody').innerHTML = html;
+
+  document.querySelectorAll('#trBody .tr-edit').forEach(inp => {
+    inp.addEventListener('change', function() {
+      let i = +this.dataset.idx, lg = this.dataset.lang;
+      if (!trans[i]) trans[i] = { de:'', fr:'', zh:'', ja:'', es:'', pt:'' };
+      trans[i][lg] = this.value;
+      dirty.dashboard = dirty.validator = true;
+      let l = data.labels[i];
+      let st = trStatusOf(i, l, lg);
+      let row = this.closest('tr');
+      if (row) {
+        let chipCell = row.cells[3], sizeCell = row.cells[4];
+        chipCell.innerHTML = st === 'ok' ? '<span class="chip chip-ok">OK</span>' : st === 'warn' ? '<span class="chip chip-warn">CHECK</span>' : '<span class="chip chip-miss">MISSING</span>';
+        this.classList.toggle('is-miss', st === 'miss');
+        let e = expansion(l.text, this.value, lg);
+        sizeCell.innerHTML = (this.value && e) ? '<span class="badge badge-' + e.level + '">' + (e.pct>0?'+':'') + e.pct + '%</span>' : '-';
+        if (e && e.level === 'high') botMsg('⚠️ "' + l.text + '" ' + lg.toUpperCase() + ' is +' + e.pct + '% — may break UI');
+      }
+    });
+  });
+}
+
+/* AUTOMATION */
+function renderAutomation() {
+  let total = data.labels.length;
+  if (!total) { document.getElementById('autoBody').innerHTML = 'Run ANALYZE first'; return; }
+  let d = window._dups || computeDups();
+  let buckets = { ready: [], review: [], blocked: [] };
+  data.labels.forEach((l, i) => {
+    let r = toscaRecommend(l, d.dupIds, d.dupNames);
+    let row = { l, r, i };
+    if (r.needsAttr) buckets.blocked.push(row);
+    else if (r.riskL === 'LOW') buckets.ready.push(row);
+    else buckets.review.push(row);
+  });
+
+  function tableOf(rows) {
+    return '<table><tr><th>Label</th><th>Tag</th><th>ID</th><th>Properties</th><th>Best Property</th><th>Conf%</th><th>Tosca Control</th></tr>' +
+      rows.map(({l, r}) => '<tr><td>' + esc(l.text) + '</td><td>' + l.tag + '</td>' +
+        '<td>' + (l.id ? '<span class="prop">' + esc(l.id) + '</span>' + (l.dynId ? ' <span class="badge badge-high">DYN</span>' : '') : '-') + '</td>' +
+        '<td>' + (propList(l) ? '<span class="prop">' + esc(propList(l)) + '</span>' : '-') + '</td>' +
+        '<td><span class="prop">' + esc(r.best.p) + '</span></td><td>' + r.conf + '%</td><td>' + r.ctrl + '</td></tr>').join('') + '</table>';
+  }
+
+  let html = '<div class="stats">' +
+    '<div class="stat-card"><div class="stat-label">✅ Ready</div><div class="stat-value" style="color:#2EA44F;">' + buckets.ready.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">⚠️ Review</div><div class="stat-value" style="color:#c98a00;">' + buckets.review.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">❌ Needs Attribute</div><div class="stat-value" style="color:#dc2626;">' + buckets.blocked.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Dynamic IDs</div><div class="stat-value" style="color:#dc2626;">' + data.labels.filter(l=>l.dynId).length + '</div></div></div>';
+
+  html += '<p style="margin-bottom:8px;"><span class="badge badge-high">POLICY</span> XPath is never recommended. Property priority: data-testid → name → aria-label → stable id → role → innertext.</p>';
+
+  html += '<details class="sec-red"' + (buckets.blocked.length ? ' open' : '') + '><summary>❌ Needs Attribute — request data-testid from dev <span class="badge badge-high">' + buckets.blocked.length + '</span></summary><div class="det-body">' + (buckets.blocked.length ? tableOf(buckets.blocked) : '<p style="padding:6px;">None 🎉</p>') + '</div></details>';
+  html += '<details class="sec-amber"><summary>⚠️ Review — usable but not ideal <span class="badge badge-med">' + buckets.review.length + '</span></summary><div class="det-body">' + (buckets.review.length ? tableOf(buckets.review) : '<p style="padding:6px;">None</p>') + '</div></details>';
+  html += '<details class="sec-green"><summary>✅ Ready — stable properties available <span class="badge badge-low">' + buckets.ready.length + '</span></summary><div class="det-body">' + (buckets.ready.length ? tableOf(buckets.ready) : '<p style="padding:6px;">None</p>') + '</div></details>';
+
+  document.getElementById('autoBody').innerHTML = html;
+}
+
+/* TEST CASES */
+function downloadTemplate() {
+  let csv = 'TestCase_ID,Step_No,Test Step Description,Button/Label (EN),DE,FR,ZH,JA,ES,PT,Status\r\n';
+  csv += 'TC_001,1,"Navigate to TE.com QA environment","",,,,,,,\r\n';
+  csv += 'TC_001,2,"Click on ""Log In"" option","Log In",,,,,,,\r\n';
+  csv += 'TC_001,3,"Click ""Create an Account"" from dropdown","Create an Account",,,,,,,\r\n';
+  download(csv, 'magnifier_testcase_template.csv', 'text/csv;charset=utf-8');
+  botMsg('📋 Template downloaded — fill column D with quoted labels, then upload here to auto-fill translations.');
+}
+function loadTcFile(ev) {
+  let f = ev.target.files[0];
+  if (!f) return;
+  let reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('tcText').value = e.target.result;
+    botMsg('📂 Loaded ' + f.name + ' — click MAP STEPS.');
+  };
+  reader.readAsText(f, 'utf-8');
+}
+function extractTcLabels(text) {
+  let found = [], seen = {};
+  let re = /["“”']([^"“”']{2,60})["“”']/g, m;
+  while ((m = re.exec(text)) !== null) {
+    let t = m[1].trim().replace(/\s+/g,' ');
+    if (/^https?:|^www\.|^\+?\d[\d\s-]*$/.test(t)) continue;
+    let key = normText(t);
+    if (!seen[key]) { seen[key] = true; found.push(t); }
+  }
+  return found;
+}
+function mapTestCases() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first.'); return; }
+  let text = document.getElementById('tcText').value;
+  if (!text.trim()) { botMsg('⚠️ Paste steps or upload a CSV first.'); return; }
+  let tcLabels = extractTcLabels(text);
+  testMap = tcLabels.map(t => {
+    let idx = data.labels.findIndex(l => normText(l.text) === normText(t));
+    if (idx === -1) {
+      let best = -1, bestScore = 0;
+      data.labels.forEach((l, i) => { let s = simText(l.text, t); if (s > bestScore) { bestScore = s; best = i; } });
+      if (bestScore >= 0.7) idx = best;
+    }
+    return { tcLabel: t, idx: idx };
+  });
+  let covered = testMap.filter(x => x.idx !== -1).length;
+  let pct = tcLabels.length ? Math.round(covered / tcLabels.length * 100) : 0;
+
+  let html = '<div class="stats" style="grid-template-columns:1fr 1fr;">' +
+    '<div class="stat-card"><div class="stat-label">Labels in Steps</div><div class="stat-value">' + tcLabels.length + '</div></div>' +
+    '<div class="stat-card"><div class="stat-label">Found on Page</div><div class="stat-value" style="color:' + (pct>=80?'#2EA44F':pct>=50?'#c98a00':'#dc2626') + ';">' + pct + '%</div></div></div>';
+  html += '<table><tr><th>Test Step Label</th><th>Page Match</th><th>DE</th><th>FR</th><th>ZH</th><th>JA</th><th>ES</th><th>PT</th></tr>';
+  testMap.forEach(x => {
+    if (x.idx === -1) html += '<tr><td><strong>' + esc(x.tcLabel) + '</strong></td><td><span class="chip chip-miss">NOT FOUND</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>';
+    else {
+      let t = trans[x.idx] || {};
+      let c = k => data[k].length ? (t[k] ? '<td>' + esc(t[k]) + '</td>' : '<td><span class="chip chip-miss">✗</span></td>') : '<td>-</td>';
+      html += '<tr><td><strong>' + esc(x.tcLabel) + '</strong></td><td>' + esc(data.labels[x.idx].text) + '</td>' + c('de') + c('fr') + c('zh') + c('ja') + c('es') + c('pt') + '</tr>';
+    }
+  });
+  html += '</table>';
+  document.getElementById('tcResult').innerHTML = html;
+  botMsg('🧪 Mapped ' + tcLabels.length + ' labels — ' + pct + '% found on page.');
+}
+function clearTc() {
+  document.getElementById('tcText').value = '';
+  document.getElementById('tcFile').value = '';
+  document.getElementById('tcResult').innerHTML = 'Run ANALYZE, then paste steps and click MAP STEPS.';
+  testMap = [];
+}
+
+/* VALIDATOR */
+function renderValidator() {
+  let total = data.labels.length;
+  if (!total) { document.getElementById('validatorBody').innerHTML = 'Run ANALYZE first'; return; }
+  let issues = [];
+  data.labels.forEach((l,i) => {
+    let t = trans[i]||{};
+    LANGS.forEach(([k,n]) => {
+      if (data[k].length && !t[k]) issues.push({ label:l.text, issue:'Blank/unmatched '+n, sev:'high' });
+      if (t[k] && normText(t[k]) === normText(l.text) && !CJK.includes(k)) issues.push({ label:l.text, issue:n+' identical to EN (untranslated?)', sev:'med' });
+      let e = expansion(l.text, t[k], k);
+      if (e && e.level === 'high') issues.push({ label:l.text, issue:n+' expansion +'+e.pct+'% (breaks 50% budget)', sev:'high' });
+      else if (e && e.level === 'med') issues.push({ label:l.text, issue:n+' expansion +'+e.pct+'% (over 30% budget)', sev:'med' });
+    });
+    glossary.forEach(g => {
+      if (l.text.toLowerCase().includes(g.en.toLowerCase()) && t[g.lang] && !t[g.lang].toLowerCase().includes(g.term.toLowerCase())) {
+        issues.push({ label:l.text, issue:'Glossary: '+g.lang.toUpperCase()+' must use "'+g.term+'" for "'+g.en+'"', sev:'high' });
+      }
+    });
+  });
+  let html = '<div class="stats" style="grid-template-columns:1fr 1fr;"><div class="stat-card"><div class="stat-label">Checks</div><div class="stat-value">' + (total*8) + '</div></div><div class="stat-card"><div class="stat-label">Issues</div><div class="stat-value" style="color:' + (issues.length?'#dc2626':'#2EA44F') + ';">' + issues.length + '</div></div></div>';
+  if (issues.length) {
+    html += '<table><tr><th>Label</th><th>Issue</th></tr>' + issues.slice(0,150).map(x => '<tr><td>' + esc(x.label) + '</td><td><span class="badge badge-' + x.sev + '">' + esc(x.issue) + '</span></td></tr>').join('') + '</table>';
+    if (issues.length > 150) html += '<p style="margin-top:6px;">+' + (issues.length-150) + ' more (see Report export)</p>';
+  } else html += '<p>✅ All checks passed.</p>';
+  document.getElementById('validatorBody').innerHTML = html;
+  window._issues = issues;
+}
+
+/* GLOSSARY */
+function addGloss() {
+  let en = document.getElementById('gEn').value.trim();
+  let lang = document.getElementById('gLang').value;
+  let term = document.getElementById('gTerm').value.trim();
+  if (!en || !term) { botMsg('⚠️ Fill EN term and translation'); return; }
+  glossary.push({ en, lang, term });
+  document.getElementById('gEn').value = ''; document.getElementById('gTerm').value = '';
+  renderGloss(); dirty.validator = true;
+  botMsg('📖 "' + en + '" → ' + lang.toUpperCase() + ' "' + term + '"');
+}
+function delGloss(i) { glossary.splice(i,1); renderGloss(); dirty.validator = true; }
+function renderGloss() {
+  document.getElementById('glossBody').innerHTML = glossary.map((g,i) =>
+    '<tr><td>' + esc(g.en) + '</td><td>' + g.lang.toUpperCase() + '</td><td>' + esc(g.term) + '</td><td><button class="btn btn-secondary btn-small" onclick="delGloss(' + i + ')">✕</button></td></tr>'
+  ).join('') || '<tr><td colspan="4" style="text-align:center;padding:30px;">No terms yet</td></tr>';
+}
+
+function clearAll() {
+  ['en','de','fr','zh','ja','es','pt'].forEach(l => document.getElementById(l).value = '');
+  document.getElementById('batchFiles').value = '';
+  data = { labels: [], en: [], de: [], fr: [], zh: [], ja: [], es: [], pt: [] };
+  trans = {};
+  window._matchDiag = {};
+  window._pageTitle = '';
+  updatePagebar();
+  document.getElementById('pbTime').textContent = '—';
+  markAllDirty();
+  renderIfDirty(currentTab);
+  botMsg('🗑 Cleared');
+}
+
+/* DATA-AWARE CHATBOT */
+function botMsg(m) { addMsg(m,'bot'); }
+function addMsg(m, who) {
+  let row = document.createElement('div');
+  row.className = 'msg-row ' + (who==='user'?'user':'');
+  row.innerHTML = '<div class="msg-avatar ' + (who==='user'?'usr':'bot') + '">' + (who==='user'?'👤':'🤖') + '</div><div class="msg msg-' + (who==='user'?'user':'bot') + '">' + esc(m) + '</div>';
+  document.getElementById('chat').appendChild(row);
+  document.getElementById('chat').scrollTop = 999999;
+}
+function answerFromData(m) {
+  let total = data.labels.length;
+  if (!total) return 'No analysis yet — paste HTML and press ANALYZE first.';
+  let d = window._dups || computeDups();
+  for (let [k, n] of LANGS) {
+    if (m.includes(k) || m.includes(n.toLowerCase())) {
+      if (!data[k].length) return n + ' is not loaded yet.';
+      let blanks = total - filledCount(k);
+      let pct = Math.round(filledCount(k)/total*100);
+      let dg = window._matchDiag[k] || {};
+      let extra = '';
+      if (dg.strict_mode) extra = '\n🔒 STRICT MODE (structure differs — ' + dg.total_target + ' vs ' + dg.total_en + ' nodes). Matches: ' + (dg.by_identifier||0) + ' by identifier, ' + (dg.by_identical_text||0) + ' by identical text. Position matching disabled to prevent false PASS.';
+      return n + ': ' + pct + '% complete, ' + blanks + ' blank of ' + total + '.' + extra + '\n📂 Translations → Edit one language → ' + n + ' → Missing only.';
+    }
+  }
+  if (m.includes('strict') || m.includes('false') || m.includes('wrong')) {
+    return 'Matching v2: when a language has a different element count than EN, STRICT MODE activates — only stable-identifier and identical-text matches are accepted. Position matching is disabled so wrong translations can never be marked MATCHED. Blanks are recoverable; false PASS is not.';
+  }
+  if (m.includes('top') || m.includes('risk') || m.includes('problem')) {
+    let recs = data.labels.map(l => toscaRecommend(l, d.dupIds, d.dupNames));
+    let blocked = recs.filter(r => r.needsAttr).length;
+    let dyn = data.labels.filter(l => l.dynId).length;
+    let blanks = 0;
+    LANGS.forEach(([k]) => { if (data[k].length) blanks += total - filledCount(k); });
+    return 'Top issues:\n1. ' + blanks + ' blank translations\n2. ' + blocked + ' elements need data-testid\n3. ' + dyn + ' dynamic IDs\n4. ' + countExpansionWarnings() + ' expansion warnings\nDashboard has clickable links to each.';
+  }
+  if (m.includes('tosca') || m.includes('ready') || m.includes('automation')) {
+    let recs = data.labels.map(l => toscaRecommend(l, d.dupIds, d.dupNames));
+    let ready = recs.filter(r => r.riskL === 'LOW').length;
+    let blocked = recs.filter(r => r.needsAttr).length;
+    return 'Tosca readiness: ' + ready + '/' + total + ' ready (' + Math.round(ready/total*100) + '%), ' + blocked + ' blocked (need attribute).\n🛠️ Automation tab has the three buckets. No XPath — ever.';
+  }
+  if (m.includes('expan')) return countExpansionWarnings() + ' expansion warnings. Amber = +30%, red = +50% (breaks UI boxes). ZH/JA exempt — CJK contracts.';
+  if (m.includes('how many') || m.includes('label') || m.includes('count')) return total + ' labels on "' + (window._pageTitle||'page') + '" across ' + ['en','de','fr','zh','ja','es','pt'].filter(l=>data[l].length).length + ' languages.';
+  if (m.includes('id') && m.includes('browser')) return 'IDs do NOT change per browser — they come from the server HTML. They change per session/render (dynamic IDs, flagged HIGH). What differs per browser is innerText vs outerText (Firefox → use outerText, TCL0003).';
+  if (m.includes('test')) return '🧪 Test Cases tab: download the template, fill the Button/Label column with quoted labels, upload — translations auto-fill. Or paste raw steps.';
+  if (m.includes('export')) return '📥 Export tab: Full CSV, Tosca CSV (ID + properties, no XPath), Test Map CSV, JSON (with match-method breakdown), Report, Missing CSV — all UTF-8 Excel-safe.';
+  if (m.includes('hi') || m.includes('hello')) return 'Hello! 👋 Try: "de missing", "zh missing", "top risks", "tosca ready", "strict mode".';
+  return 'Try: "de missing" · "zh missing" · "top risks" · "tosca ready" · "strict mode" · "expansion" · "export"';
+}
+function sendChat() {
+  let inp = document.getElementById('chatinput');
+  let msg = inp.value.trim(); if (!msg) return;
+  addMsg(msg,'user'); inp.value = '';
+  setTimeout(() => botMsg(answerFromData(msg.toLowerCase())), 350);
+}
+
+/* EXPORTS */
+function download(content, filename, type) {
+  let blob = new Blob(["\ufeff"+content], { type });
+  let url = URL.createObjectURL(blob);
+  let a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+function csvCell(s) { return '"' + (s||'').replace(/"/g,'""') + '"'; }
+
+function exportCSV() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  let csv = 'No,Category,Label,Risk,DE,DE_Status,FR,FR_Status,ZH,ZH_Status,JA,JA_Status,ES,ES_Status,PT,PT_Status\r\n';
+  data.labels.forEach((l,i) => {
+    let t = trans[i]||{};
+    csv += [i+1, catOf(l), csvCell(l.text), l.risk,
+      csvCell(t.de), matchStatus(i,'de'), csvCell(t.fr), matchStatus(i,'fr'),
+      csvCell(t.zh), matchStatus(i,'zh'), csvCell(t.ja), matchStatus(i,'ja'),
+      csvCell(t.es), matchStatus(i,'es'), csvCell(t.pt), matchStatus(i,'pt')].join(',') + '\r\n';
+  });
+  download(csv, 'magnifier_pro_1.7.csv', 'text/csv;charset=utf-8');
+  botMsg('✅ CSV downloaded');
+}
+function exportTosca() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  let d = window._dups || computeDups();
+  let csv = 'No,Label,Tag,ID,Dynamic ID,Properties,Best Property,Alternative,Confidence%,Risk,Tosca Control,Needs Attribute\r\n';
+  data.labels.forEach((l,i) => {
+    let r = toscaRecommend(l, d.dupIds, d.dupNames);
+    csv += [i+1, csvCell(l.text), l.tag, csvCell(l.id), l.dynId ? 'YES' : 'NO', csvCell(propList(l)), csvCell(r.best.p), csvCell(r.alt.p), r.conf, r.riskL, csvCell(r.ctrl), r.needsAttr ? 'YES' : 'NO'].join(',') + '\r\n';
+  });
+  download(csv, 'magnifier_pro_1.7_tosca.csv', 'text/csv;charset=utf-8');
+  botMsg('✅ Tosca CSV downloaded');
+}
+function exportTestMap() {
+  if (!testMap.length) { botMsg('⚠️ Map test cases first (🧪 tab)'); return; }
+  let csv = 'Test Step Label,Page Match,DE,FR,ZH,JA,ES,PT\r\n';
+  testMap.forEach(x => {
+    if (x.idx === -1) csv += csvCell(x.tcLabel) + ',NOT FOUND,,,,,,\r\n';
+    else {
+      let t = trans[x.idx] || {};
+      csv += [csvCell(x.tcLabel), csvCell(data.labels[x.idx].text), csvCell(t.de), csvCell(t.fr), csvCell(t.zh), csvCell(t.ja), csvCell(t.es), csvCell(t.pt)].join(',') + '\r\n';
+    }
+  });
+  download(csv, 'magnifier_pro_1.7_testmap.csv', 'text/csv;charset=utf-8');
+  botMsg('✅ Test Map CSV downloaded');
+}
+function exportJSON() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  download(JSON.stringify({ version:'PRO 1.7', page: window._pageTitle, labels:data.labels, translations:trans, glossary, matchDiag: window._matchDiag, testMap }, null, 2), 'magnifier_pro_1.7.json', 'application/json');
+  botMsg('✅ JSON downloaded');
+}
+function exportReport() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  renderValidator(); dirty.validator = false;
+  let r = 'MAGNIFIER PRO 1.7 Report — ' + (window._pageTitle||'') + '\r\n' + '='.repeat(50) + '\r\n';
+  r += 'Labels: ' + data.labels.length + ' | Expansion warnings: ' + countExpansionWarnings() + '\r\n\r\n';
+  r += 'MATCH DIAGNOSTICS (v2 — strict on structure shift)\r\n' + '-'.repeat(50) + '\r\n';
+  LANGS.forEach(([k,n]) => {
+    let d = window._matchDiag[k];
+    if (d) r += n + ': target=' + d.total_target + ' matched=' + d.matched + ' blank=' + d.blank_unmatched + (d.strict_mode ? ' [STRICT MODE]' : '') + ' | by-identifier=' + (d.by_identifier||0) + ' by-text=' + (d.by_identical_text||0) + ' by-position=' + (d.by_position||0) + '\r\n';
+  });
+  r += '\r\nVALIDATION ISSUES\r\n' + '-'.repeat(50) + '\r\n';
+  (window._issues||[]).forEach(x => r += '[' + x.sev.toUpperCase() + '] ' + x.label + ' — ' + x.issue + '\r\n');
+  r += '\r\nLABELS\r\n' + '-'.repeat(50) + '\r\n';
+  data.labels.forEach((l,i) => {
+    let t = trans[i]||{};
+    r += (i+1) + '. [' + catOf(l) + '] ' + l.text + ' [' + l.risk + ']' + (l.id ? ' id=' + l.id : '') + '\r\n   DE:' + (t.de||'-') + ' | FR:' + (t.fr||'-') + ' | ZH:' + (t.zh||'-') + ' | JA:' + (t.ja||'-') + ' | ES:' + (t.es||'-') + ' | PT:' + (t.pt||'-') + '\r\n';
+  });
+  download(r, 'magnifier_pro_1.7_report.txt', 'text/plain;charset=utf-8');
+  botMsg('✅ Report downloaded');
+}
+function exportMissing() {
+  if (!data.labels.length) { botMsg('⚠️ Run ANALYZE first'); return; }
+  let csv = 'Language,Category,Blank/Unmatched Label\r\n';
+  LANGS.forEach(([k,n]) => {
+    if (!data[k].length) return;
+    data.labels.forEach((l,i) => { if (!trans[i] || !trans[i][k]) csv += n + ',' + catOf(l) + ',' + csvCell(l.text) + '\r\n'; });
+  });
+  download(csv, 'magnifier_pro_1.7_missing.csv', 'text/csv;charset=utf-8');
+  botMsg('✅ Missing CSV downloaded');
+}
+
+setTrView('focus');
+botMsg('Hi! 👋 MAGNIFIER PRO 1.7 — matching v2: strict mode kills false MATCHes.\nPaste HTML → ANALYZE. Ask me "strict mode" to learn how it works.');
+</script>
+
+</body>
+</html>
